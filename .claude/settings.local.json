@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Windsor_ai__get_current_user"
+    ]
+  }
+}

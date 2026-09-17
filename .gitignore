@@ -1,0 +1,28 @@
+# segredo e config local — nunca sobe
+.env
+.env.*
+.origem
+.credentials.json
+*.pem
+*.key
+
+# ponte pro Codex — recriada pelo /setup em cada máquina
+.agents/
+
+# lixo de sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# dependências e cache
+node_modules/
+__pycache__/
+*.pyc
+.cache/
+
+# mídia pesada (vídeo, áudio bruto) — combinar com o time antes de subir
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.zip
