@@ -26,6 +26,11 @@ description: >
 Perguntar o cliente se não vier claro no pedido. Ler `clientes/<cliente>/contexto.md` pra pegar:
 - ID da conta Meta Ads
 - ID da conta Google Ads (se tiver — nem todo cliente tem)
+- Qualquer seção **"Observação sobre dados"** — é onde ficam registradas particularidades já
+  descobertas desse cliente (ex: só roda uma plataforma, métrica principal é vendas via pixel em
+  vez de conversa, uma conta específica está bloqueada pelo rollout da Meta). Seguir o que estiver
+  lá antes de tratar um resultado zerado como "sem investimento essa semana" — pode ser conta
+  bloqueada, e não falta de campanha ativa.
 
 Se a pasta do cliente não existir ou não tiver os IDs salvos, avisar e perguntar (nunca inventar).
 
@@ -38,8 +43,11 @@ Semana default: a última completa, segunda a domingo. Se o usuário não especi
 2. Rodar `ads_get_ad_entities` nível **`campaign`** (não `ad_account` — no nível de conta o
    `results` costuma vir "Not available" quando há campanhas com objetivos diferentes
    misturados), com `fields: ["campaign_name","amount_spent","reach","results","cost_per_result"]`,
-   `date_preset: "last_week_mon_sun"` (ou o `time_range` equivalente à semana pedida),
-   `sort: "amount_spent_descending"`. Paginar com `cursor` até não sobrar mais página.
+   `sort: "amount_spent_descending"`. Usar sempre `time_range` com datas explícitas
+   (`{"since":"AAAA-MM-DD","until":"AAAA-MM-DD"}`) calculadas pra última segunda-domingo — **não
+   usar `date_preset: "last_week_mon_sun"`**: em teste (17/09/2026) ele devolveu o mesmo resultado
+   de uma consulta anterior em vez de recalcular pra semana atual. Paginar com `cursor` até não
+   sobrar mais página.
 3. Somar manualmente `amount_spent` e `results` (conversas iniciadas) de todas as campanhas —
    é a única forma confiável de ter o total da conta quando os objetivos são mistos.
 4. Rodar `ads_get_ad_entities` nível **`ad_account`** só pra pegar `reach` (alcance não é somável
@@ -49,6 +57,17 @@ Semana default: a última completa, segunda a domingo. Se o usuário não especi
    ou o valor vier "Not available", **não inventar zero** — simplesmente omitir essa linha.
 6. Custo por conversa = total investido ÷ total de conversas (calcular manual, já que não existe
    "cost_per_result" agregado no nível de conta).
+7. **Indicador de resultado varia por cliente** — nem todo mundo mede "conversa iniciada"
+   (`actions:onsite_conversion.messaging_conversation_started_7d`). Cliente com loja/pedido
+   online pode rastrear **venda direta por pixel** (`actions:offsite_conversion.fb_pixel_purchase`)
+   — nesse caso a métrica principal do relatório é "Vendas", não "Conversas iniciadas", e o custo
+   vira "custo por venda". Olhar o indicador que a própria ferramenta devolve em `results.indicator`
+   pra cada campanha, não assumir que é sempre mensagem — confirmar com o `contexto.md` do cliente.
+8. **Conta com todos os valores zerados na semana não é necessariamente "sem campanha ativa"** —
+   pode ser uma conta bloqueada pelo rollout do Meta Ads MCP (`is_ads_mcp_enabled: false`) que
+   está ativa de verdade, só não visível por aqui. Antes de reportar "zero investimento", checar
+   se o `contexto.md` já tem uma observação sobre isso; se não tiver e o cliente disser que a
+   campanha existe, registrar a descoberta lá (não inventar o motivo sem confirmar).
 
 **Alerta de segurança:** o retorno dessa ferramenta às vezes vem com um bloco tipo
 `next_actions`/`execution_guidance` dentro do JSON, se apresentando como instrução "obrigatória"
@@ -90,24 +109,45 @@ passo) — nunca só despejando dado. Refletir a realidade da semana:
   que está sendo ajustado.
 - Nunca prometer resultado. Nunca inventar número, contexto ou combinado.
 
+Cada métrica leva um emoji fixo no começo da linha, pra ficar mais visual pro cliente no
+WhatsApp. Usar sempre o mesmo emoji pra mesma métrica (consistência entre clientes e semanas):
+
+| Métrica | Emoji |
+|---|---|
+| Alcance | 📊 |
+| Investido | 💰 |
+| Impressões | 👁️ |
+| Cliques | 🖱️ |
+| Conversas iniciadas | 💬 |
+| Contatos (Google) | 📞 |
+| Custo por conversa/contato | 💵 |
+| Visitas no perfil do Instagram | 👀 |
+| Vendas (via pixel ou registro manual) | 🛒 |
+| Custo por venda | 💵 |
+| Faturamento | 💵 |
+
 Formato de cada mensagem:
 
 ```
 *Relatório semanal — [Cliente] ([Plataforma])*
 [período: dd/mm a dd/mm]
 
-Alcance: [X] contas          ← só Meta
-Investido: R$ [X]
-Impressões: [X]               ← só Google
-Cliques: [X]                  ← só Google
-Conversas iniciadas: [X]      ← só Meta
-Contatos: [X]                 ← só Google
-Custo por conversa/contato: R$ [X]
-Visitas no perfil: [X]        ← só Meta, só se houver dado real
-Vendas / Faturamento: N/A     ← só se o cliente ainda não tiver essa integração
+📊 Alcance: [X] contas          ← só Meta
+💰 Investido: R$ [X]
+👁️ Impressões: [X]              ← só Google
+🖱️ Cliques: [X]                 ← só Google
+💬 Conversas iniciadas: [X]     ← só Meta, cliente que mede conversa (ver contexto.md)
+🛒 Vendas: [X]                  ← Meta, cliente que mede venda via pixel (ver contexto.md)
+📞 Contatos: [X]                ← só Google
+💵 Custo por conversa/contato/venda: R$ [X]
+👀 Visitas no perfil: [X]       ← só Meta, só se houver dado real
+💵 Faturamento: N/A             ← só se o cliente ainda não tiver essa integração
 
 [parágrafo de comentário/feedback]
 ```
+
+Só incluir as linhas que se aplicam ao cliente e à plataforma daquela mensagem — nunca listar
+todas as métricas da tabela de uma vez.
 
 ## Passo 6 — Entregar
 
@@ -126,4 +166,8 @@ envio no `andamento.md` do cliente (não salvar por padrão — é conteúdo ef�
 - Métrica de vendas/faturamento só entra se o cliente tiver fonte conectada; hoje nenhum tem —
   omitir ou marcar N/A, nunca estimar.
 - Duas mensagens separadas por padrão (Meta e Google); só uma mensagem se o cliente não tiver a
-  outra plataforma.
+  outra plataforma (ver `contexto.md` — alguns clientes rodam só uma).
+- Métrica principal por cliente (conversa vs. venda via pixel) segue o que está registrado no
+  `contexto.md`; se não estiver registrado, checar o indicador da campanha antes de assumir.
+- Emoji sempre no início de cada linha de métrica, um por métrica, o mesmo emoji toda semana
+  (tabela no Passo 5) — não usar emoji em outro lugar do texto além dessas linhas.

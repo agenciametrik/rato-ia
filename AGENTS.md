@@ -166,5 +166,11 @@ no fim", e a sessão nunca morre sem essa oferta. Não oferecer em sessão trivi
 <!-- pastas de trabalho abaixo, criadas pelo /setup conforme o negócio -->
 - `clientes/` · uma pasta por cliente, com briefing, entregas e andamento
   - `clientes/tabuas-theresina/` · kit churrasco, tábuas de corte e presentes personalizados, Teresina-PI. Gestão de Meta Ads + Google Ads
+  - `clientes/central-do-pneu/` · loja de pneus, Teresina-PI. Gestão de Meta Ads
+  - `clientes/ortobom/` · rede de lojas de colchão, Teresina-PI. Gestão de Meta Ads + Google Ads
+  - `clientes/borregos/` · cortes e derivados de cordeiro, Teresina-PI. Gestão de Meta Ads
+  - `clientes/sertao-de-dentro/` · pizza, churrasco e burguer, Altos-PI. Gestão de Meta Ads
+  - `clientes/lacerda-advocacia/` · escritório de advocacia. Gestão de Meta Ads
+  - `clientes/dr-paulo-sergio/` · consultório odontológico (endodontia). Gestão de Meta Ads + Google Ads
 - `metrik-comercial/` · propostas e briefings recebidos, antes de virar cliente
 - `metrik-conteudos/` · produção de conteúdo própria da Metrik (site, redes, captação)
