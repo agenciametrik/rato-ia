@@ -63,6 +63,14 @@ Semana default: a última completa, segunda a domingo. Se o usuário não especi
    — nesse caso a métrica principal do relatório é "Vendas", não "Conversas iniciadas", e o custo
    vira "custo por venda". Olhar o indicador que a própria ferramenta devolve em `results.indicator`
    pra cada campanha, não assumir que é sempre mensagem — confirmar com o `contexto.md` do cliente.
+
+   Cliente com venda via pixel pode ter **faturamento e ticket médio reais** (não N/A): pedir
+   também o campo `website_purchase_roas` (ROAS) de cada campanha. Faturamento de uma campanha =
+   `amount_spent × website_purchase_roas` — somar de todas as campanhas com ROAS não-nulo, mesmo
+   as que não são a de "vendas" (pode haver venda atribuída a campanha de tráfego/alcance também).
+   Ticket médio = faturamento total ÷ total de vendas. Só fazer essa conta quando o `contexto.md`
+   do cliente confirmar que ele tem pixel de compra configurado — nunca estimar faturamento pra
+   cliente que só mede conversa.
 8. **Conta com todos os valores zerados na semana não é necessariamente "sem campanha ativa"** —
    pode ser uma conta bloqueada pelo rollout do Meta Ads MCP (`is_ads_mcp_enabled: false`) que
    está ativa de verdade, só não visível por aqui. Antes de reportar "zero investimento", checar
@@ -141,7 +149,8 @@ Formato de cada mensagem:
 📞 Contatos: [X]                ← só Google
 💵 Custo por conversa/contato/venda: R$ [X]
 👀 Visitas no perfil: [X]       ← só Meta, só se houver dado real
-💵 Faturamento: N/A             ← só se o cliente ainda não tiver essa integração
+💵 Faturamento: R$ [X] / N/A    ← real se o cliente tiver pixel de compra (ver contexto.md); N/A pros outros
+💵 Ticket médio: R$ [X]         ← só cliente com pixel de compra
 
 [parágrafo de comentário/feedback]
 ```
